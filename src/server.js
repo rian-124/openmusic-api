@@ -5,7 +5,7 @@ const ClientError = require('./exceptions/ClientError.js');
 const SongsService = require('./services/postgres/SongsService.js');
 const albums = require('./api/albums/index.js');
 const AlbumsService = require('./services/postgres/AlbumsService.js');
-const AlbumsValidator = require('./validation/index.js');
+const { AlbumsValidator, SongsValidator } = require('./validation/index.js');
 
 const init = async () => {
   const albumsService = new AlbumsService();
@@ -20,27 +20,52 @@ const init = async () => {
     },
   });
 
-  await server.register({
-    plugin: albums,
-    options: {
-      service: albumsService,
-      validator: AlbumsValidator,
+  await server.register([
+    {
+      plugin: albums,
+      options: {
+        service: albumsService,
+        validator: AlbumsValidator,
+      },
     },
-  });
+    {
+      plugin: songs,
+      options: {
+        service: songsService,
+        validator: SongsValidator,
+      },
+    },
+  ]);
 
   server.ext('onPreResponse', (request, h) => {
     const { response } = request;
 
-    if (response instanceof ClientError) {
-      const newResponse = h.response({
-        status: 'fail',
-        message: response.message,
-      });
+    if (response instanceof Error) {
+      // penanganan client error secara internal.
+      if (response instanceof ClientError) {
+        const newResponse = h.response({
+          status: 'fail',
+          message: response.message,
+        });
+        newResponse.code(response.statusCode);
+        return newResponse;
+      }
 
-      newResponse.code(response.statusCode);
+      // mempertahankan penanganan client error oleh hapi secara native, seperti 404, etc.
+      if (!response.isServer) {
+        return h.continue;
+      }
+
+      // penanganan server error sesuai kebutuhan
+      const newResponse = h.response({
+        status: 'error',
+        message: 'terjadi kegagalan pada server kami',
+      });
+      newResponse.code(500);
       return newResponse;
     }
 
+    // jika bukan error, lanjutkan dengan response sebelumnya
     return h.continue;
   });
 

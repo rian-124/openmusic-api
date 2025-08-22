@@ -30,7 +30,7 @@ export const up = (pgm) => {
       notNull: true,
     },
     genre: {
-      type: 'INTEGER',
+      type: 'VARCHAR(100)',
       notNull: true,
     },
     duration: {

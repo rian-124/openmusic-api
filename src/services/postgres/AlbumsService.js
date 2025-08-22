@@ -37,11 +37,21 @@ class AlbumsService {
       throw new NotFoundError('Cannot retrieve album, ID not found');
     }
 
-    return result.rows.map(mapDBToAlbumModel)[0];
+    const album = mapDBToAlbumModel(result.rows[0]);
+    const songsQuerry = {
+      text: 'SELECT * FROM songs WHERE "albumId" = $1',
+      values: [id],
+    };
+
+    const songsResult = await this._pool.query(songsQuerry);
+
+    return {
+      ...album,
+      songs: songsResult.rows,
+    };
   }
 
   async editAlbumById(id, { name, year }) {
-
     const query = {
       text: 'UPDATE albums SET name = $1, year = $2 WHERE id = $3 RETURNING id',
       values: [name, year, id],
