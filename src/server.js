@@ -5,9 +5,14 @@ const ClientError = require('./exceptions/ClientError.js');
 const SongsService = require('./services/postgres/SongsService.js');
 const albums = require('./api/albums/index.js');
 const AlbumsService = require('./services/postgres/AlbumsService.js');
-const { AlbumsValidator, SongsValidator } = require('./validation/index.js');
+const { AlbumsValidator } = require('./validation/albums/index.js');
+const { SongsValidator } = require('./validation/songs/index.js');
+const UsersService = require('./services/postgres/UsersService.js');
+const users = require('./api/users/index.js');
+const { usersValidator } = require('./validation/users/index.js');
 
 const init = async () => {
+  const userService = new UsersService();
   const albumsService = new AlbumsService();
   const songsService = new SongsService();
   const server = Hapi.server({
@@ -21,6 +26,13 @@ const init = async () => {
   });
 
   await server.register([
+    {
+      plugin: users,
+      options: {
+        service: userService,
+        validator: usersValidator,
+      },
+    },
     {
       plugin: albums,
       options: {
@@ -59,7 +71,7 @@ const init = async () => {
       // penanganan server error sesuai kebutuhan
       const newResponse = h.response({
         status: 'error',
-        message: 'terjadi kegagalan pada server kami',
+        message: 'Ups! something wrong with our server',
       });
       newResponse.code(500);
       return newResponse;

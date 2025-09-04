@@ -1,9 +1,6 @@
 /**
  * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
  */
-
-/* eslint-disable camelcase */
-
 export const shorthands = undefined;
 
 /**
@@ -12,18 +9,22 @@ export const shorthands = undefined;
  * @returns {Promise<void> | void}
  */
 export const up = (pgm) => {
-  pgm.createTable('albums', {
+  pgm.createTable('users', {
     id: {
       type: 'VARCHAR(50)',
       primaryKey: true,
     },
-    name: {
+    username: {
       type: 'VARCHAR(100)',
       notNull: true,
     },
-    year: {
-      type: 'INTEGER',
-      notNull: true,
+    password: {
+      type: 'TEXT',
+      notNull: false,
+    },
+    fullname: {
+      type: 'TEXT',
+      notNull: false,
     },
   });
 };
@@ -34,5 +35,5 @@ export const up = (pgm) => {
  * @returns {Promise<void> | void}
  */
 export const down = (pgm) => {
-  pgm.dropTable('albums');
+  pgm.dropTable('users');
 };
