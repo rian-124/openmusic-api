@@ -10,9 +10,16 @@ const { SongsValidator } = require('./validation/songs/index.js');
 const UsersService = require('./services/postgres/UsersService.js');
 const users = require('./api/users/index.js');
 const { usersValidator } = require('./validation/users/index.js');
+const authentications = require('./api/authentications/index.js');
+const AuthenticationsService = require('./services/postgres/AuthenticationsService.js');
+const TokenManager = require('./tokenize/TokenManager.js');
+const {
+  AuthenticationsValidator,
+} = require('./validation/authentications/index.js');
 
 const init = async () => {
-  const userService = new UsersService();
+  const authenticationsService = new AuthenticationsService();
+  const usersService = new UsersService();
   const albumsService = new AlbumsService();
   const songsService = new SongsService();
   const server = Hapi.server({
@@ -27,9 +34,18 @@ const init = async () => {
 
   await server.register([
     {
+      plugin: authentications,
+      options: {
+        authenticationsService,
+        usersService,
+        tokenManager: TokenManager,
+        validator: AuthenticationsValidator,
+      },
+    },
+    {
       plugin: users,
       options: {
-        service: userService,
+        service: usersService,
         validator: usersValidator,
       },
     },
@@ -53,6 +69,7 @@ const init = async () => {
     const { response } = request;
 
     if (response instanceof Error) {
+      console.error(response);
       // penanganan client error secara internal.
       if (response instanceof ClientError) {
         const newResponse = h.response({
