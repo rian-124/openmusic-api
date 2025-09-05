@@ -1,21 +1,34 @@
+// mengimpor dotenv dan menjalankan konfigurasinya
+
 require('dotenv').config();
 const Hapi = require('@hapi/hapi');
+const Jwt = require('@hapi/jwt');
+
+// songs
 const songs = require('./api/songs/index.js');
-const ClientError = require('./exceptions/ClientError.js');
 const SongsService = require('./services/postgres/SongsService.js');
+const { SongsValidator } = require('./validation/songs/index.js');
+
+// albums
 const albums = require('./api/albums/index.js');
 const AlbumsService = require('./services/postgres/AlbumsService.js');
 const { AlbumsValidator } = require('./validation/albums/index.js');
-const { SongsValidator } = require('./validation/songs/index.js');
-const UsersService = require('./services/postgres/UsersService.js');
+
+// users
 const users = require('./api/users/index.js');
+const UsersService = require('./services/postgres/UsersService.js');
 const { usersValidator } = require('./validation/users/index.js');
+
+// authentications
 const authentications = require('./api/authentications/index.js');
 const AuthenticationsService = require('./services/postgres/AuthenticationsService.js');
 const TokenManager = require('./tokenize/TokenManager.js');
 const {
   AuthenticationsValidator,
 } = require('./validation/authentications/index.js');
+
+// errorHandling
+const ClientError = require('./exceptions/ClientError.js');
 
 const init = async () => {
   const authenticationsService = new AuthenticationsService();
@@ -30,6 +43,28 @@ const init = async () => {
         origin: ['*'],
       },
     },
+  });
+
+  await server.register([
+    {
+      plugin: Jwt,
+    },
+  ]);
+
+  server.auth.strategy('musicsapp_jwt', 'jwt', {
+    keys: process.env.ACCESS_TOKEN_KEY,
+    verify: {
+      aud: false,
+      iss: false,
+      sub: false,
+      maxAgeSec: process.env.ACCESS_TOKEN_AGE,
+    },
+    validate: (artifacts) => ({
+      isValid: true,
+      credentials: {
+        id: artifacts.decoded.payload.id,
+      },
+    }),
   });
 
   await server.register([
