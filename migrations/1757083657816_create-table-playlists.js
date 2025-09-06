@@ -1,9 +1,6 @@
 /**
  * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
  */
-
-/* eslint-disable camelcase */
-
 export const shorthands = undefined;
 
 /**
@@ -12,36 +9,25 @@ export const shorthands = undefined;
  * @returns {Promise<void> | void}
  */
 export const up = (pgm) => {
-  pgm.createTable('songs', {
+  pgm.createTable('playlists', {
     id: {
       type: 'VARCHAR(50)',
       primaryKey: true,
     },
-    title: {
+    name: {
       type: 'VARCHAR(100)',
       notNull: true,
     },
-    year: {
-      type: 'INTEGER',
-      notNull: true,
-    },
-    performer: {
-      type: 'VARCHAR(100)',
-      notNull: true,
-    },
-    genre: {
-      type: 'VARCHAR(100)',
-      notNull: true,
-    },
-    duration: {
-      type: 'INTEGER',
-      notNull: false,
-    },
-    album_id: {
+    owner: {
       type: 'VARCHAR(50)',
-      notNull: false,
     },
   });
+
+  pgm.addConstraint(
+    'playlists',
+    'fk_playlist.owner_users.id',
+    'FOREIGN KEY(owner) REFERENCES users(id) ON DELETE CASCADE'
+  );
 };
 
 /**
@@ -50,5 +36,5 @@ export const up = (pgm) => {
  * @returns {Promise<void> | void}
  */
 export const down = (pgm) => {
-  pgm.dropTable('songs');
+  pgm.dropTable('playlists');
 };
