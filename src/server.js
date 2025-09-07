@@ -33,13 +33,21 @@ const playlist = require('./api/playlists/index.js');
 const PlaylistsService = require('./services/postgres/PlaylistsService.js');
 const { PlaylistsValidator } = require('./validation/playlists/index.js');
 const PlaylistSongsService = require('./services/postgres/PlaylistSongsService.js');
+const collaborations = require('./api/collaborations/index.js');
+const {
+  CollaborationsValidator,
+} = require('./validation/collaborations/index.js');
+const CollaborationsService = require('./services/postgres/collaborationsService.js');
+const PlaylistActivitiesService = require('./services/postgres/PlaylistActivitiesService.js');
 
 const init = async () => {
   const authenticationsService = new AuthenticationsService();
   const usersService = new UsersService();
   const albumsService = new AlbumsService();
   const songsService = new SongsService();
-  const playlistsService = new PlaylistsService();
+  const playlistActivitiesService = new PlaylistActivitiesService();
+  const collaborationsService = new CollaborationsService(usersService);
+  const playlistsService = new PlaylistsService(collaborationsService);
   const playlistSongsService = new PlaylistSongsService(songsService);
   const server = Hapi.server({
     port: process.env.PORT,
@@ -107,9 +115,18 @@ const init = async () => {
     {
       plugin: playlist,
       options: {
+        playlistActivitiesService,
         playlistsService,
         playlistSongsService,
         validator: PlaylistsValidator,
+      },
+    },
+    {
+      plugin: collaborations,
+      options: {
+        collaborationsService,
+        playlistsService,
+        validator: CollaborationsValidator,
       },
     },
   ]);
@@ -118,7 +135,6 @@ const init = async () => {
     const { response } = request;
 
     if (response instanceof Error) {
-      console.error(response);
       // penanganan client error secara internal.
       if (response instanceof ClientError) {
         const newResponse = h.response({

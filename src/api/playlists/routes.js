@@ -20,8 +20,8 @@ const routes = (handler) => [
     path: '/playlists/{id}',
     handler: handler.deletePlaylistHandler,
     options: {
-      auth: 'musicsapp_jwt'
-    }
+      auth: 'musicsapp_jwt',
+    },
   },
   {
     method: 'POST',
@@ -43,6 +43,14 @@ const routes = (handler) => [
     method: 'DELETE',
     path: '/playlists/{id}/songs',
     handler: handler.deletePlaylistSongsHandler,
+    options: {
+      auth: 'musicsapp_jwt',
+    },
+  },
+  {
+    method: 'GET',
+    path: '/playlists/{id}/activities',
+    handler: handler.getPlaylistActivitiesHandler,
     options: {
       auth: 'musicsapp_jwt',
     },
