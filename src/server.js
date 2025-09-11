@@ -1,5 +1,4 @@
 // mengimpor dotenv dan menjalankan konfigurasinya
-
 require('dotenv').config();
 const Hapi = require('@hapi/hapi');
 const Jwt = require('@hapi/jwt');
@@ -19,6 +18,11 @@ const users = require('./api/users/index.js');
 const UsersService = require('./services/postgres/UsersService.js');
 const { usersValidator } = require('./validation/users/index.js');
 
+// exports
+const _exports = require('./api/exports/index.js');
+const ExportsValidator = require('./validation/exports/index.js');
+const ProducerService = require('./services/rabbitmq/producerService.js');
+
 // authentications
 const authentications = require('./api/authentications/index.js');
 const AuthenticationsService = require('./services/postgres/AuthenticationsService.js');
@@ -37,8 +41,9 @@ const collaborations = require('./api/collaborations/index.js');
 const {
   CollaborationsValidator,
 } = require('./validation/collaborations/index.js');
-const CollaborationsService = require('./services/postgres/collaborationsService.js');
 const PlaylistActivitiesService = require('./services/postgres/PlaylistActivitiesService.js');
+const CollaborationsService = require('./services/postgres/CollaborationsService.js');
+const config = require('./utils/config.js');
 
 const init = async () => {
   const authenticationsService = new AuthenticationsService();
@@ -50,8 +55,8 @@ const init = async () => {
   const playlistsService = new PlaylistsService(collaborationsService);
   const playlistSongsService = new PlaylistSongsService(songsService);
   const server = Hapi.server({
-    port: process.env.PORT,
-    host: process.env.HOST,
+    port: config.app.port,
+    host: config.app.host,
     routes: {
       cors: {
         origin: ['*'],
@@ -129,6 +134,14 @@ const init = async () => {
         validator: CollaborationsValidator,
       },
     },
+    {
+      plugin: _exports,
+      options: {
+        playlistsService,
+        producerService: ProducerService,
+        validator: ExportsValidator
+      }
+    }
   ]);
 
   server.ext('onPreResponse', (request, h) => {

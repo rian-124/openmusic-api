@@ -47,7 +47,6 @@ class PlaylistSongsService {
   }
 
   async deletePlaylistSongs(playlistId, songId) {
-    console.log(`playlist: ${playlistId}`, `songId: ${songId}`);
     const query = {
       text: 'DELETE FROM playlist_songs WHERE playlist_id = $1 AND song_id = $2 RETURNING id',
       values: [playlistId, songId],
