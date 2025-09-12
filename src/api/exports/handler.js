@@ -16,21 +16,23 @@ class ExportsHandler {
     await this._playlistService.verifyPlaylistAccess(playlistId, owner);
 
     const message = {
-        playlistId: playlistId,
-        targetEmail: request.payload.targetEmail
+      playlistId: playlistId,
+      targetEmail: request.payload.targetEmail,
     };
 
-    await this._producerService.sendMessage('export:playlist', JSON.stringify(message));
+    await this._producerService.sendMessage(
+      'export:playlist',
+      JSON.stringify(message)
+    );
 
     const response = h.response({
-        status: 'success',
-        message: 'Your request is being processed.'
+      status: 'success',
+      message: 'Your request is being processed.',
     });
 
     response.code(201);
 
     return response;
-
   }
 }
 

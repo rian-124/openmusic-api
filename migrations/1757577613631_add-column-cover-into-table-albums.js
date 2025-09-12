@@ -9,7 +9,12 @@ export const shorthands = undefined;
  * @returns {Promise<void> | void}
  */
 export const up = (pgm) => {
-  pgm.addColumn('albums', 'cover');
+  pgm.addColumn('albums', {
+    cover: {
+      type: 'TEXT',
+      notNull: false,
+    },
+  });
 };
 
 /**

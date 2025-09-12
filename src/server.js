@@ -2,6 +2,7 @@
 require('dotenv').config();
 const Hapi = require('@hapi/hapi');
 const Jwt = require('@hapi/jwt');
+const path = require('path');
 
 // songs
 const songs = require('./api/songs/index.js');
@@ -44,11 +45,17 @@ const {
 const PlaylistActivitiesService = require('./services/postgres/PlaylistActivitiesService.js');
 const CollaborationsService = require('./services/postgres/CollaborationsService.js');
 const config = require('./utils/config.js');
+const StorageService = require('./services/storageService/StorageService.js');
+const UploadsValidator = require('./validation/uploads/index.js');
+const inert = require('@hapi/inert');
 
 const init = async () => {
   const authenticationsService = new AuthenticationsService();
   const usersService = new UsersService();
   const albumsService = new AlbumsService();
+  const storageService = new StorageService(
+    path.resolve(__dirname, 'api/albums/file/images')
+  );
   const songsService = new SongsService();
   const playlistActivitiesService = new PlaylistActivitiesService();
   const collaborationsService = new CollaborationsService(usersService);
@@ -68,6 +75,9 @@ const init = async () => {
     {
       plugin: Jwt,
     },
+    {
+      plugin: inert,
+    }
   ]);
 
   server.auth.strategy('musicsapp_jwt', 'jwt', {
@@ -106,8 +116,10 @@ const init = async () => {
     {
       plugin: albums,
       options: {
-        service: albumsService,
-        validator: AlbumsValidator,
+        albumsService,
+        albumsValidator: AlbumsValidator,
+        storageService,
+        uploadsValidator: UploadsValidator,
       },
     },
     {
@@ -139,13 +151,15 @@ const init = async () => {
       options: {
         playlistsService,
         producerService: ProducerService,
-        validator: ExportsValidator
-      }
-    }
+        validator: ExportsValidator,
+      },
+    },
   ]);
 
   server.ext('onPreResponse', (request, h) => {
     const { response } = request;
+
+    console.log(response);
 
     if (response instanceof Error) {
       // penanganan client error secara internal.

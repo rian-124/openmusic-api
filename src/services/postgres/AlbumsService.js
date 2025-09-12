@@ -26,6 +26,21 @@ class AlbumsService {
     return result.rows[0].id;
   }
 
+  async addCoverAlbumId({ albumId, cover }) {
+
+    const query = {
+      text: 'UPDATE albums SET cover = $1 WHERE id = $2 RETURNING id',
+      values: [cover, albumId]
+    };
+
+    const result = await this._pool.query(query);
+
+    if (!result.rows.length) {
+      throw new InvariantError('Failed to added cover, album not found');
+    }
+
+  }
+
   async getAlbumById(id) {
     const query = {
       text: 'SELECT * FROM albums WHERE id = $1',
