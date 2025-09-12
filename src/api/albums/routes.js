@@ -14,9 +14,9 @@ const routes = (handler) => [
         allow: 'multipart/form-data',
         multipart: true,
         output: 'stream',
-        maxBytes: 512000
-      }
-    }
+        maxBytes: 512000,
+      },
+    },
   },
   {
     method: 'GET',
@@ -24,8 +24,8 @@ const routes = (handler) => [
     handler: {
       directory: {
         path: path.resolve(__dirname, 'file'),
-      }
-    }
+      },
+    },
   },
   {
     method: 'GET',

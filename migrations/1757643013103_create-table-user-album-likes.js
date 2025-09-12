@@ -1,7 +1,7 @@
 /**
  * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
  */
-
+/* eslint-disable camelcase */
 export const shorthands = undefined;
 
 /**
@@ -10,20 +10,32 @@ export const shorthands = undefined;
  * @returns {Promise<void> | void}
  */
 export const up = (pgm) => {
-  pgm.createTable('albums', {
+  pgm.createTable('user_album_likes', {
     id: {
       type: 'VARCHAR(50)',
-      primaryKey: true,
-    },
-    name: {
-      type: 'VARCHAR(100)',
       notNull: true,
     },
-    year: {
-      type: 'INTEGER',
+    user_id: {
+      type: 'VARCHAR(50)',
+      notNull: true,
+    },
+    album_id: {
+      type: 'VARCHAR(50)',
       notNull: true,
     },
   });
+
+  pgm.addConstraint(
+    'user_album_likes',
+    'fk_userAlbumLikes.albumId_albums.id',
+    'FOREIGN KEY(album_id) REFERENCES albums(id) ON DELETE CASCADE'
+  );
+
+  pgm.addConstraint(
+    'user_album_likes',
+    'fk_userAlbumLikes.userId_users.id',
+    'FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE'
+  );
 };
 
 /**
@@ -32,5 +44,5 @@ export const up = (pgm) => {
  * @returns {Promise<void> | void}
  */
 export const down = (pgm) => {
-  pgm.dropTable('albums');
+  pgm.dropTable('user_album_likes');
 };

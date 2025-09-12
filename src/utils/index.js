@@ -7,5 +7,5 @@ module.exports = {
   config,
   mapDBToAlbumModel,
   mapDBToSongModel,
-  mapDBToPlaylistModel
+  mapDBToPlaylistModel,
 };

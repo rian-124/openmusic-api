@@ -15,7 +15,7 @@ const TokenManager = {
 
       const { payload } = artifacts.decoded;
       return payload;
-    } catch (error) {
+    } catch {
       throw new InvariantError('Invalid refresh token');
     }
   },

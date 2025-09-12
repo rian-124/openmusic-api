@@ -2,7 +2,12 @@ const autoBind = require('auto-bind');
 const { config } = require('../../utils');
 
 class AlbumsHandler {
-  constructor(albumsService, albumsValidator, storageService, uploadsValidator) {
+  constructor(
+    albumsService,
+    albumsValidator,
+    storageService,
+    uploadsValidator
+  ) {
     this._albumsService = albumsService;
     this._albumsValidator = albumsValidator;
     this._storageService = storageService;
