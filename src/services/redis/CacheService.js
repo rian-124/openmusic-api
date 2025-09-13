@@ -15,7 +15,7 @@ class CacheService {
 
     this._client.connect();
 
-    this._expirationInSecond = 3600;
+    this._expirationInSecond = 1800;
   }
 
   async set(key, value, expirationInSecond = this._expirationInSecond) {
@@ -34,6 +34,14 @@ class CacheService {
 
   async del(key) {
     return this._client.del(key);
+  }
+
+  async deleteByPattern(pattern) {
+    const keys = await this._client.keys(pattern);
+
+    if (keys.length > 0) {
+      await this._client.del(keys);
+    }
   }
 }
 

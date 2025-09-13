@@ -74,7 +74,7 @@ const init = async () => {
   const storageService = new StorageService(
     path.resolve(__dirname, 'api/albums/file/images')
   );
-  const songsService = new SongsService();
+  const songsService = new SongsService(cacheService);
   const playlistActivitiesService = new PlaylistActivitiesService();
   const collaborationsService = new CollaborationsService(usersService);
   const playlistsService = new PlaylistsService(collaborationsService);
@@ -184,8 +184,6 @@ const init = async () => {
 
   server.ext('onPreResponse', (request, h) => {
     const { response } = request;
-
-    console.log(response);
 
     if (response instanceof Error) {
       // penanganan client error secara internal.

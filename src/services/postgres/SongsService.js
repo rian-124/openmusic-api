@@ -5,8 +5,10 @@ const NotFoundError = require('../../exceptions/NotFoundError');
 const { mapDBToSongModel } = require('../../utils');
 
 class SongsService {
-  constructor() {
+  constructor(cacheService) {
     this._pool = new Pool();
+
+    this._cacheService = cacheService;
   }
 
   async addSong({ title, year, performer, genre, duration, albumId }) {
@@ -31,49 +33,84 @@ class SongsService {
       throw new InvariantError('Song failed to be added');
     }
 
+    await this._cacheService.del(`song:${id}`);
+    await this._cacheService.deleteByPattern('songs:*');
+
     return result.rows[0].id;
   }
 
   async getSongs({ title, performer } = {}) {
-    let baseQuery = 'SELECT id, title, performer FROM songs';
-    const conditions = [];
-    const values = [];
+    const chacheKey = `songs:${title || ''}:${performer || ''}`;
+    try {
+      const result = await this._cacheService.get(chacheKey);
 
-    if (title) {
-      values.push(`%${title.toLowerCase()}%`);
-      conditions.push(`LOWER(title) LIKE $${values.length}`);
+      return {
+        songs: JSON.parse(result),
+        cache: true,
+      };
+    } catch {
+      let baseQuery = 'SELECT id, title, performer FROM songs';
+      const conditions = [];
+      const values = [];
+
+      if (title) {
+        values.push(`%${title.toLowerCase()}%`);
+        conditions.push(`LOWER(title) LIKE $${values.length}`);
+      }
+
+      if (performer) {
+        values.push(`%${performer.toLowerCase()}%`);
+        conditions.push(`LOWER(performer) LIKE $${values.length}`);
+      }
+
+      if (conditions.length > 0) {
+        baseQuery += ` WHERE ${conditions.join(' AND ')} `;
+      }
+
+      const result = await this._pool.query({
+        text: baseQuery,
+        values,
+      });
+
+      await this._cacheService.set(chacheKey, JSON.stringify(result.rows));
+
+      return {
+        songs: result.rows,
+        cache: false,
+      };
     }
-
-    if (performer) {
-      values.push(`%${performer.toLowerCase()}%`);
-      conditions.push(`LOWER(performer) LIKE $${values.length}`);
-    }
-
-    if (conditions.length > 0) {
-      baseQuery += ` WHERE ${conditions.join(' AND ')} `;
-    }
-
-    const result = await this._pool.query({
-      text: baseQuery,
-      values,
-    });
-
-    return result.rows;
   }
 
   async getSongById(id) {
-    const query = {
-      text: 'SELECT * FROM songs WHERE id = $1',
-      values: [id],
-    };
+    const cacheKey = `song:${id}`;
+    try {
+      const result = await this._cacheService.get(cacheKey);
 
-    const result = await this._pool.query(query);
+      return {
+        song: JSON.parse(result),
+        cache: true,
+      };
+    } catch {
+      const query = {
+        text: 'SELECT * FROM songs WHERE id = $1',
+        values: [id],
+      };
 
-    if (!result.rows.length) {
-      throw new NotFoundError('Cannot retrieve album, ID not found');
+      const result = await this._pool.query(query);
+
+      if (!result.rows.length) {
+        throw new NotFoundError('Cannot retrieve album, ID not found');
+      }
+
+      const mappedResult = result.rows.map(mapDBToSongModel)[0];
+
+      await this._cacheService.set(cacheKey, JSON.stringify(mappedResult));
+
+      return {
+        song: mappedResult,
+        cache: false,
+      };
     }
-
-    return result.rows.map(mapDBToSongModel)[0];
   }
 
   async editSongById(id, { title, year, performer, genre, duration, albumId }) {
@@ -87,6 +124,9 @@ class SongsService {
     if (!result.rows.length) {
       throw new NotFoundError('Songs cannot be updated, ID not found');
     }
+
+    await this._cacheService.del(`song:${id}`);
+    await this._cacheService.deleteByPattern('songs:*');
   }
 
   async deleteSong(id) {
@@ -100,6 +140,9 @@ class SongsService {
     if (!result.rows.length) {
       throw new NotFoundError('Songs cannot be deleted, ID not found');
     }
+
+    await this._cacheService.del(`song:${id}`);
+    await this._cacheService.deleteByPattern('songs:*');
   }
 
   async verifySong(songId) {
